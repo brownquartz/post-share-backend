@@ -13,7 +13,7 @@ app.use(cors());
 app.use(express.json());
 
 // DB 接続
-const db = new sqlite3.Database(dbFile, (err) => {
+const db = new Database(dbFile, (err) => {
   if (err) return console.error(err);
   console.log('Connected to SQLite database.');
 
