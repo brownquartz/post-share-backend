@@ -2,7 +2,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const Database = require('better-sqlite3');
+const sqlite3 = require('sqlite3').verbose();
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -13,7 +13,9 @@ app.use(cors());
 app.use(express.json());
 
 // DB 接続とマイグレーション
-const db = new Database(dbPath);
+const db = new sqlite3.Database(dbPath, err => {
+  if (err) console.error('DB open error:', err);
+});
 db.exec(`
   CREATE TABLE IF NOT EXISTS posts (
     id TEXT PRIMARY KEY,
@@ -39,16 +41,14 @@ app.post('/api/posts', (req, res) => {
   const { id, title, accountId, password, content } = req.body;
   const expireAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
-  const insertStmt = db.prepare(`
-    INSERT INTO posts (id, title, account_id, password, content, expire_at)
-    VALUES (?, ?, ?, ?, ?, ?)
-  `);
-  try {
-    insertStmt.run(id, title, accountId, password, content, expireAt);
+  const stmt = db.prepare(
+    `INSERT INTO posts (...)
+    VALUES (?, ?, ?, ?, ?, ?)`
+  );
+  stmt.run(id, title, accountId, password, content, expireAt, function(err) {
+    if (err) return res.status(500).json({ error: err.message });
     res.status(201).json({ success: true, expireAt });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  });
 });
 
 // GET /api/posts?accountId=…&password=…
