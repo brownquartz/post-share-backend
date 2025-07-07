@@ -8,8 +8,15 @@ const app = express();
 const PORT = process.env.PORT || 4000;
 const dbPath = path.join(__dirname, 'posts.db');
 
+const corsOptions = {
+  origin: 'https://brownquartz.github.io',   // your GH Pages URL
+  methods: ['GET','POST','OPTIONS'],
+  allowedHeaders: ['Content-Type']
+};
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));  // preflight をキャッチ
+
 // ミドルウェア設定
-app.use(cors());
 app.use(express.json());
 
 // DB 接続とマイグレーション
