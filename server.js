@@ -49,8 +49,15 @@ app.post('/api/posts', (req, res) => {
   const expireAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
   const stmt = db.prepare(
-    `INSERT INTO posts (...)
-    VALUES (?, ?, ?, ?, ?, ?)`
+    `INSERT INTO posts (
+     id,
+     title,
+     account_id,
+     password,
+     content,
+     expire_at
+   )
+   VALUES (?, ?, ?, ?, ?, ?)`
   );
   stmt.run(id, title, accountId, password, content, expireAt, function(err) {
     if (err) return res.status(500).json({ error: err.message });
