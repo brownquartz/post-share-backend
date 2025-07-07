@@ -9,7 +9,10 @@ const PORT = process.env.PORT || 4000;
 const dbPath = path.join(__dirname, 'posts.db');
 
 const corsOptions = {
-  origin: 'https://brownquartz.github.io',   // your GH Pages URL
+  origin: [
+    'https://brownquartz.github.io',           // GH Pages
+    'https://jaab1h52.up.railway.app',         // Railway の自動生成ドメイン
+  ],
   methods: ['GET','POST','OPTIONS'],
   allowedHeaders: ['Content-Type']
 };
