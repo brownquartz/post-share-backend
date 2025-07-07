@@ -11,7 +11,7 @@ const dbPath = path.join(__dirname, 'posts.db');
 const corsOptions = {
   origin: [
     'https://brownquartz.github.io',           // GH Pages
-    'https://jaab1h52.up.railway.app',         // Railway の自動生成ドメイン
+    'https://post-share-backend-production.up.railway.app',         // Railway の自動生成ドメイン
   ],
   methods: ['GET','POST','OPTIONS'],
   allowedHeaders: ['Content-Type']
