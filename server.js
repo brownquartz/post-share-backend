@@ -8,24 +8,26 @@ const app = express();
 const PORT = process.env.PORT || 4000;
 const dbPath = path.join(__dirname, 'posts.db');
 
+// CORS 設定（フロントエンドのホスト名を許可）
 const corsOptions = {
   origin: [
-    'https://brownquartz.github.io',           // GH Pages
-    'https://post-share-backend-production.up.railway.app',         // Railway の自動生成ドメイン
+    'https://brownquartz.github.io',
+    'https://post-share-backend-production.up.railway.app',
   ],
-  methods: ['GET','POST','OPTIONS'],
-  allowedHeaders: ['Content-Type']
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type'],
 };
 app.use(cors(corsOptions));
-app.options('*', cors(corsOptions));  // preflight をキャッチ
+app.options('*', cors(corsOptions)); // Preflight 対応
 
-// ミドルウェア設定
+// JSON ボディをパース
 app.use(express.json());
 
-// DB 接続とマイグレーション
+// SQLite DB 接続
 const db = new sqlite3.Database(dbPath, err => {
   if (err) console.error('DB open error:', err);
 });
+// テーブル作成（なければ）
 db.exec(`
   CREATE TABLE IF NOT EXISTS posts (
     id TEXT PRIMARY KEY,
@@ -38,7 +40,7 @@ db.exec(`
     is_visible INTEGER DEFAULT 1
   );
 `);
-// 期限切れフラグ更新
+// 期限切れになった投稿を非表示フラグに更新
 const expireStmt = db.prepare(`
   UPDATE posts
     SET is_visible = 0
@@ -52,15 +54,7 @@ app.post('/api/posts', (req, res) => {
   const expireAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
   const stmt = db.prepare(
-    `INSERT INTO posts (
-     id,
-     title,
-     account_id,
-     password,
-     content,
-     expire_at
-   )
-   VALUES (?, ?, ?, ?, ?, ?)`
+    `INSERT INTO posts (id, title, account_id, password, content, expire_at) VALUES (?, ?, ?, ?, ?, ?)`
   );
   stmt.run(id, title, accountId, password, content, expireAt, function(err) {
     if (err) return res.status(500).json({ error: err.message });
@@ -68,7 +62,7 @@ app.post('/api/posts', (req, res) => {
   });
 });
 
-// GET /api/posts?accountId=…&password=…
+// GET /api/posts?accountId=...&password=... → 複数投稿取得
 app.get('/api/posts', (req, res) => {
   const { accountId, password } = req.query;
   const selectStmt = db.prepare(`
@@ -88,7 +82,7 @@ app.get('/api/posts', (req, res) => {
   }
 });
 
-// GET /api/posts/:id?accountId=…&password=…
+// GET /api/posts/:id?accountId=...&password=... → 単一投稿取得
 app.get('/api/posts/:id', (req, res) => {
   const { id } = req.params;
   const { accountId, password } = req.query;
