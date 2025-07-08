@@ -5,6 +5,8 @@ const postsRouter = require('./routes/posts.js');
 
 const app = express();
 
+console.log('🚀 [startup] server.js が読み込まれました');
+
 // ↓↓↓ CORSヘッダーを強制インジェクトするミドルウェア ↓↓↓
 app.use((req, res, next) => {
   // すべてのリクエストに対して常にこのヘッダーを付与
