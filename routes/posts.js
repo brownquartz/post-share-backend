@@ -29,8 +29,6 @@ db.run(`
 router.post('/', (req, res) => {
   const { id, title, accountId, password, content } = req.body;
 
-  res.setHeader('Access-Control-Allow-Origin', '*'); // CORS対応
-
   if (!id || !title || !accountId || !password || !content) {
     return res.status(400).json({ status:'error', message:'All fields are required' });
   }
