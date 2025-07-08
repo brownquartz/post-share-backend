@@ -1,20 +1,24 @@
 // backend/server.js
-const express = require('express');
-const { fileURLToPath } = require('url');
-const { dirname, join }  = require('path');
+const express     = require('express');
+const path        = require('path');
 const postsRouter = require('./routes/posts.js');
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname  = dirname(__filename);
 
 const app  = express();
 const PORT = process.env.PORT || 4000;
 
+// JSON パーサー & API ルート
 app.use(express.json());
 app.use('/api/posts', postsRouter);
 
-const clientBuildPath = join(__dirname, '../build');
+// React build を静的配信（post-share/build を指す）
+const clientBuildPath = path.join(__dirname, '../build');
 app.use(express.static(clientBuildPath));
-app.get('*', (_, res) => res.sendFile(join(clientBuildPath, 'index.html')));
 
-app.listen(PORT, () => console.log(`Server up on ${PORT}`));
+// それ以外はすべて React の index.html にフォールバック
+app.get('*', (req, res) => {
+  res.sendFile(path.join(clientBuildPath, 'index.html'));
+});
+
+app.listen(PORT, () => {
+  console.log(`Server up on ${PORT}`);
+});
