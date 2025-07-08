@@ -1,31 +1,31 @@
-// backend/server.js
 const express = require('express');
 const cors    = require('cors');
-const postsRouter = require('./routes/posts');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-// --- CORS ミドルウェア設定 ---
-// オリジンはワイルドカード(*)でも OK ですが、
-// 本番では https://brownquartz.github.io や
-// https://<あなたのRailwayドメイン> に絞るとより安全です。
+// CORS・プリフライト対応
 app.use(cors({
   origin: [
+    'http://localhost:3000',                     
     'https://brownquartz.github.io',
     'https://post-share-backend-production.up.railway.app'
   ],
   methods: ['GET','POST','OPTIONS'],
   allowedHeaders: ['Content-Type']
 }));
-// プリフライトも cors() を通す
-app.options('/{*any}', cors());
 
-// JSON ボディのパース
+// JSON ボディを受け取れるように
 app.use(express.json());
 
-// ルーター登録
+// CRUD は routes/posts.js に丸投げ
+const postsRouter = require('./routes/posts');
 app.use('/api/posts', postsRouter);
+
+// 404 ハンドリング（オプション）
+app.use((req, res) => {
+  res.status(404).json({ status: 'error', code: 404, message: 'Not found' });
+});
 
 app.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
