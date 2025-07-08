@@ -12,20 +12,22 @@ const allowedOrigins = [
   'https://post-share-backend-production.up.railway.app'
 ]
 
-app.use(cors({
-  origin: (origin, callback) => {
-    // origin が空（同一オリジンのAPIテスト等）の場合も許可
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true)
-    } else {
-      callback(new Error('Not allowed by CORS: ' + origin))
-    }
-  },
-  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
-  allowedHeaders: ['Content-Type']
-}))
+// app.use(cors({
+//   origin: (origin, callback) => {
+//     // origin が空（同一オリジンのAPIテスト等）の場合も許可
+//     if (!origin || allowedOrigins.includes(origin)) {
+//       callback(null, true)
+//     } else {
+//       callback(new Error('Not allowed by CORS: ' + origin))
+//     }
+//   },
+//   methods: ['GET','POST','PUT','DELETE','OPTIONS'],
+//   allowedHeaders: ['Content-Type']
+// }))
 
-app.options('*', cors())
+// app.options('*', cors())
+
+app.use(cors());
 
 // JSON ボディを受け取れるように
 app.use(express.json());
