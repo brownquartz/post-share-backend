@@ -1,47 +1,60 @@
 // backend/routes/posts.js
 const express = require('express');
-const router  = express.Router();
-const sqlite3 = require('sqlite3').verbose();
+const fs      = require('fs');
+const path    = require('path');
+const Database = require('better-sqlite3');
 
-// ./posts.db が存在しなければ同じディレクトリに作成されます
-const db = new sqlite3.Database(process.env.DB_FILE || './posts.db');
+// SQLite ファイルは同ディレクトリ直下に `posts.db`
+const dbPath = path.resolve(__dirname, '../posts.db');
+const db = new Database(dbPath);
 
-// テーブルがなければ作っておく
-db.run(`CREATE TABLE IF NOT EXISTS posts (
-  id TEXT PRIMARY KEY,
-  title TEXT,
-  accountId TEXT,
-  password TEXT,
-  content TEXT,
-  expiresAt INTEGER
-)`);
+// テーブルがなければ作成
+db.prepare(`
+  CREATE TABLE IF NOT EXISTS posts (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    accountId TEXT NOT NULL,
+    password TEXT NOT NULL,
+    content TEXT NOT NULL,
+    createdAt INTEGER NOT NULL
+  )
+`).run();
 
-// GET /api/posts?accountId=xxx&password=yyy
+const router = express.Router();
+
+// 全件取得
 router.get('/', (req, res) => {
-  const { accountId, password } = req.query;
-  db.all(
-    `SELECT * FROM posts WHERE accountId = ? AND password = ?`,
-    [accountId, password],
-    (err, rows) => {
-      if (err) return res.status(500).json({ status:'error', message:err.message });
-      res.json({ status:'ok', data: rows });
-    }
-  );
+  const stmt = db.prepare(`SELECT id, title, accountId, createdAt FROM posts ORDER BY createdAt DESC`);
+  const posts = stmt.all();
+  res.json({ status:'ok', data: posts });
 });
 
-// POST /api/posts
+// 単一取得
+router.get('/:id', (req, res) => {
+  const { id } = req.params;
+  const stmt = db.prepare(`SELECT * FROM posts WHERE id = ?`);
+  const post = stmt.get(id);
+  if (!post) return res.status(404).json({ status:'error', code:404, message:'Not found' });
+  res.json({ status:'ok', data: post });
+});
+
+// 登録
 router.post('/', (req, res) => {
   const { id, title, accountId, password, content } = req.body;
-  const expiresAt = Date.now() + 1000*60*60*24; // 24h 後
-  db.run(
-    `INSERT INTO posts (id,title,accountId,password,content,expiresAt)
-     VALUES (?,?,?,?,?,?)`,
-    [id,title,accountId,password,content,expiresAt],
-    function(err) {
-      if (err) return res.status(500).json({ status:'error', message:err.message });
-      res.json({ status:'ok', id, expiresAt });
-    }
-  );
+  if (!id || !title || !accountId || !password || !content) {
+    return res.status(400).json({ status:'error', code:400, message:'All fields are required' });
+  }
+  const createdAt = Date.now();
+  const stmt = db.prepare(`
+    INSERT INTO posts (id, title, accountId, password, content, createdAt)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `);
+  try {
+    stmt.run(id, title, accountId, password, content, createdAt);
+    res.json({ status:'ok', data:{ id, title, accountId, createdAt } });
+  } catch (e) {
+    res.status(500).json({ status:'error', code:500, message:'DB error' });
+  }
 });
 
 module.exports = router;

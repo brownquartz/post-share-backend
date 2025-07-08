@@ -1,33 +1,30 @@
 // backend/server.js
 const express = require('express');
-const path    = require('path');
+const cors    = require('cors');
+const postsRouter = require('./routes/posts');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-// 自前 CORS ヘッダー
-app.use((req, res, next) => {
-  const allowedOrigins = [
+// --- CORS ミドルウェア設定 ---
+// オリジンはワイルドカード(*)でも OK ですが、
+// 本番では https://brownquartz.github.io や
+// https://<あなたのRailwayドメイン> に絞るとより安全です。
+app.use(cors({
+  origin: [
     'https://brownquartz.github.io',
     'https://post-share-backend-production.up.railway.app'
-  ];
-  const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-  }
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(200);
-  }
-  next();
-});
+  ],
+  methods: ['GET','POST','OPTIONS'],
+  allowedHeaders: ['Content-Type']
+}));
+// プリフライトも cors() を通す
+app.options('/{*any}', cors());
 
-// JSON ボディパース
+// JSON ボディのパース
 app.use(express.json());
 
-// ルーター
-const postsRouter = require('./routes/posts');
+// ルーター登録
 app.use('/api/posts', postsRouter);
 
 app.listen(PORT, () => {
