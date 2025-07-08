@@ -9,6 +9,7 @@ const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:4000',
   'https://brownquartz.github.io',
+  'https://post-share-backend-production.up.railway.app'
 ]
 
 app.use(cors({
