@@ -1,0 +1,10 @@
+{
+  "files": {
+    "main.js": "/post-share/static/js/main.1ad31e9f.js",
+    "index.html": "/post-share/index.html",
+    "main.1ad31e9f.js.map": "/post-share/static/js/main.1ad31e9f.js.map"
+  },
+  "entrypoints": [
+    "static/js/main.1ad31e9f.js"
+  ]
+}
