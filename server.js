@@ -28,6 +28,11 @@ const allowedOrigins = [
 process.on('uncaughtException', err => console.error('✖ Uncaught:', err));
 process.on('unhandledRejection', (reason) => console.error('✖ Rejection:', reason));
 
+app.get('/__health', (req, res) => {
+  console.log('👀 /__health was called, origin=', req.headers.origin);
+  res.json({ status: 'ok', origin: req.headers.origin || null });
+});
+
 // app.options('*', cors())
 
 app.use(cors());
