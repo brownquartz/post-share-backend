@@ -1,27 +1,35 @@
-// backend/server.js
-const express     = require('express');
-const path        = require('path');
+// backend/server.js の一番上に追加
+const express = require('express');
+const path    = require('path');
 const postsRouter = require('./routes/posts.js');
 
-const app  = express();
-const PORT = process.env.PORT || 4000;
+const app = express();
 
-// JSON パーサー & API ルート
+// ↓↓↓ CORSヘッダーを強制インジェクトするミドルウェア ↓↓↓
+app.use((req, res, next) => {
+  // すべてのリクエストに対して常にこのヘッダーを付与
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+  // プリフライト(OPTIONS)の場合は 200 だけ返して終わり
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+
+  next();
+});
+
+// JSON パーサー & API
 app.use(express.json());
 app.use('/api/posts', postsRouter);
 
-// React build を静的配信（post-share/build を指す）
+// React build の静的配信（案Aの構成のままなら）
 const clientBuildPath = path.join(__dirname, '../build');
 app.use(express.static(clientBuildPath));
-
-// それ以外はすべて React の index.html にフォールバック
-app.get('*', (req, res) => {
-  res.header('Access-Control-Allow-Origin', env.REACT_APP_API_BASE || '*');
-  res.header('Access-Control-Allow-Headers', 'X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept');
-  res.header('Access-Control-Allow-Methods', 'PUT, DELETE, OPTIONS');
+app.get('*', (_, res) => {
   res.sendFile(path.join(clientBuildPath, 'index.html'));
 });
 
-app.listen(PORT, () => {
-  console.log(`Server up on ${PORT}`);
-});
+const PORT = process.env.PORT || 4000;
+app.listen(PORT, () => console.log(`Server up on ${PORT}`));
