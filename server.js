@@ -5,15 +5,26 @@ const app = express();
 const PORT = process.env.PORT || 4000;
 
 // CORS・プリフライト対応
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:4000',
+  'https://brownquartz.github.io',
+]
+
 app.use(cors({
-  origin: [
-    'http://localhost:3000',                     
-    'https://brownquartz.github.io',
-    'https://post-share-backend-production.up.railway.app'
-  ],
-  methods: ['GET','POST','OPTIONS'],
+  origin: (origin, callback) => {
+    // origin が空（同一オリジンのAPIテスト等）の場合も許可
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true)
+    } else {
+      callback(new Error('Not allowed by CORS: ' + origin))
+    }
+  },
+  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
   allowedHeaders: ['Content-Type']
-}));
+}))
+
+app.options('/{*any}', cors())
 
 // JSON ボディを受け取れるように
 app.use(express.json());
