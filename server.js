@@ -30,6 +30,8 @@ process.on('unhandledRejection', (reason) => console.error('✖ Rejection:', rea
 
 app.get('/', (req, res, next) => {
   res.set({ 'Access-Control-Allow-Origin': '*' }); // ここでヘッダーにアクセス許可の情報を追加
+
+  console.log('res headers:', res.getHeaders());
   
   // 何らかの処理
 });
