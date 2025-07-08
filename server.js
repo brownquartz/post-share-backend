@@ -16,6 +16,9 @@ app.use(express.static(clientBuildPath));
 
 // それ以外はすべて React の index.html にフォールバック
 app.get('*', (req, res) => {
+  res.header('Access-Control-Allow-Origin', env.REACT_APP_API_BASE || '*');
+  res.header('Access-Control-Allow-Headers', 'X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept');
+  res.header('Access-Control-Allow-Methods', 'PUT, DELETE, OPTIONS');
   res.sendFile(path.join(clientBuildPath, 'index.html'));
 });
 
