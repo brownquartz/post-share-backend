@@ -25,6 +25,9 @@ const allowedOrigins = [
 //   allowedHeaders: ['Content-Type']
 // }))
 
+process.on('uncaughtException', err => console.error('✖ Uncaught:', err));
+process.on('unhandledRejection', (reason) => console.error('✖ Rejection:', reason));
+
 // app.options('*', cors())
 
 app.use(cors());
