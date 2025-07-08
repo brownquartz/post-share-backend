@@ -25,7 +25,7 @@ app.use(cors({
   allowedHeaders: ['Content-Type']
 }))
 
-app.options('/{*any}', cors())
+app.options('*', cors())
 
 // JSON ボディを受け取れるように
 app.use(express.json());
