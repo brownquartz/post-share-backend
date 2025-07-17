@@ -4,7 +4,8 @@ const cors    = require('cors');
 const postsRouter = require('./routes/posts.js');
 
 const app  = express();
-const PORT = process.env.PORT || 4000;
+// const PORT = process.env.PORT;
+const port = parseInt(process.env.PORT, 10);
 
 // CORS
 app.use(cors());
@@ -30,6 +31,7 @@ app.get('*', (_req, res) => {
 });
 
 // 5) サーバー起動
-app.listen(PORT, () => {
-  console.log(`🚀 Server up on ${PORT}`);
+console.log('▶ LISTENING ON PORT', port);
+app.listen(port, () => {
+  console.log(`🚀 Server is running on ${port}`);
 });
