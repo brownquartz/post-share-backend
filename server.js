@@ -42,6 +42,12 @@ app.use('/api/posts', postsRouter);
 
 // 5) サーバー起動
 console.log('▶ LISTENING ON PORT', port);
+
+console.log('▶ ROUTES:', app._router.stack
+  .filter(r => r.route)
+  .map(r => r.route.path)
+);
+
 app.listen(port, () => {
   console.log(`🚀 Server is running on ${port}`);
 });
