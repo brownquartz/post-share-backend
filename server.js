@@ -5,6 +5,8 @@ const postsRouter = require('./routes/posts.js');
 
 const app  = express();
 // const PORT = process.env.PORT;
+console.log('▶ ENV PORT =', process.env.PORT);
+
 const port = parseInt(process.env.PORT, 10) || 8080;
 
 app.use((req, res, next) => {

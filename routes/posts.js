@@ -25,6 +25,16 @@ db.run(`
   )
 `);
 
+db.run(
+  `insert into posts (id, title, accountId, password, content, createdAt, expiresAt)
+  values ('sample-id', 'Sample Post', 'sample-account', 'sample-password', 'This is a sample post content.', strftime('%s','now'), strftime('%s','now','+7 days'))`,
+  err => {
+    if (err && err.code !== 'SQLITE_CONSTRAINT') {  // 重複エラーは無視
+      console.error('DB initial insert error:', err);
+    }
+  }
+);
+
 // — Create —
 router.post('/', (req, res) => {
   const { id, title, accountId, password, content } = req.body;
