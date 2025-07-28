@@ -1,105 +1,91 @@
+// routes/posts.js
 const express = require('express');
-const fs      = require('fs');
-const path    = require('path');
-const sqlite3 = require('sqlite3').verbose();
+const router  = express.Router();
+const pool    = require('../db');  // ①
 
-const router = express.Router();
-const dbFile = path.join(__dirname, '../posts.db');
-
-// DB ファイルがなければ作成
-if (!fs.existsSync(dbFile)) fs.writeFileSync(dbFile, '');
-const db = new sqlite3.Database(dbFile, err => {
-  if (err) console.error('DB open error:', err);
-});
-
-// テーブルがなければ作成
-db.run(`
-  CREATE TABLE IF NOT EXISTS posts (
-    id          TEXT    PRIMARY KEY,
-    title       TEXT    NOT NULL,
-    accountId   TEXT    NOT NULL,
-    password    TEXT    NOT NULL,
-    content     TEXT    NOT NULL,
-    createdAt   INTEGER NOT NULL,
-    expiredAt   INTEGER NOT NULL DEFAULT (CAST(strftime('%s','now','+7 days') AS INTEGER))
-  )
-`);
-
-db.run(
-  `insert into posts (id, title, accountId, password, content, createdAt, expiresAt)
-  values ('sample-id', 'Sample Post', 'sample-account', 'sample-password', 'This is a sample post content.', strftime('%s','now'), strftime('%s','now','+7 days'))`,
-  err => {
-    if (err && err.code !== 'SQLITE_CONSTRAINT') {  // 重複エラーは無視
-      console.error('DB initial insert error:', err);
-    }
+// 一覧取得
+router.get('/', async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM posts');
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ status: 'error', message: err.message });
   }
-);
-
-// — Create —
-router.post('/', (req, res) => {
-  const { id, title, accountId, password, content } = req.body;
-
-  if (!id || !title || !accountId || !password || !content) {
-    return res.status(400).json({ status:'error', message:'All fields are required' });
-  }
-  const createdAt = Date.now();
-  const expiresAt = createdAt + 7 * 24 * 60 * 60 * 1000; // 7 days from now
-  const stmt = db.prepare(`
-    INSERT INTO posts (id, title, accountId, password, content, createdAt, expiresAt)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-  `);
-  stmt.run(id, title, accountId, password, content, createdAt, expiresAt, err => {
-    if (err) return res.status(500).json({ status:'error', message: err.message });
-    res.status(201).json({ status:'ok', data:{ id, title, accountId, expiresAt } });
-  });
 });
 
-// — Read all —
-router.get('/', (req, res) => {
-  const { accountId, password } = req.query;
-  db.all(
-    `SELECT id, title, accountId, content, expiresAt
-     FROM posts
-     WHERE accountId = ? AND password = ?
-     ORDER BY createdAt DESC`,
-    [accountId, password],
-    (err, rows) => {
-      if (err) return res.status(500).json({ status:'error', message: err.message });
-      res.json(rows);    // 配列だけ返す or { status:'ok', data: rows } に統一
+// 詳細取得
+router.get('/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { rows } = await pool.query(
+      'SELECT * FROM posts WHERE id = $1',
+      [id]
+    );
+    if (rows.length === 0) {
+      return res.status(404).json({ status: 'error', message: 'Not found' });
     }
-  );
+    res.json(rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ status: 'error', message: err.message });
+  }
 });
 
-// — Read one —
-router.get('/:id', (req, res) => {
-  db.get('SELECT * FROM posts WHERE id = ?', [req.params.id], (err, row) => {
-    if (err) return res.status(500).json({ status:'error', message: err.message });
-    if (!row) return res.status(404).json({ status:'error', message:'Not found' });
-    res.json({ status:'ok', data: row });
-  });
+// 新規作成
+router.post('/', async (req, res) => {
+  const { title, content, accountId } = req.body;
+  try {
+    const { rows } = await pool.query(
+      `INSERT INTO posts (title, content, accountid)
+       VALUES ($1, $2, $3)
+       RETURNING *`,
+      [title, content, accountId]
+    );
+    res.status(201).json(rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ status: 'error', message: err.message });
+  }
 });
 
-// — Update (例) —
-router.put('/:id', (req, res) => {
+// 更新
+router.put('/:id', async (req, res) => {
+  const { id } = req.params;
   const { title, content } = req.body;
-  db.run(
-    'UPDATE posts SET title = ?, content = ? WHERE id = ?',
-    [title, content, req.params.id],
-    function(err) {
-      if (err) return res.status(500).json({ status:'error', message: err.message });
-      if (this.changes === 0) return res.status(404).json({ status:'error', message:'Not found' });
-      res.json({ status:'ok', message:'Updated' });
+  try {
+    const { rowCount } = await pool.query(
+      `UPDATE posts
+       SET title = $1, content = $2
+       WHERE id = $3`,
+      [title, content, id]
+    );
+    if (rowCount === 0) {
+      return res.status(404).json({ status: 'error', message: 'Not found' });
     }
-  );
+    res.json({ status: 'ok' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ status: 'error', message: err.message });
+  }
 });
 
-// — Delete (例) —
-router.delete('/:id', (req, res) => {
-  db.run('DELETE FROM posts WHERE id = ?', [req.params.id], function(err) {
-    if (err) return res.status(500).json({ status:'error', message: err.message });
-    if (this.changes === 0) return res.status(404).json({ status:'error', message:'Not found' });
-    res.json({ status:'ok', message:'Deleted' });
-  });
+// 削除
+router.delete('/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { rowCount } = await pool.query(
+      'DELETE FROM posts WHERE id = $1',
+      [id]
+    );
+    if (rowCount === 0) {
+      return res.status(404).json({ status: 'error', message: 'Not found' });
+    }
+    res.json({ status: 'ok' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ status: 'error', message: err.message });
+  }
 });
 
 module.exports = router;
