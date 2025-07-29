@@ -1,5 +1,8 @@
 // backend/server.js
 require('dotenv').config();
+// 環境変数 DATABASE_URL の確認（Postgres 接続文字列）
+console.log('▶ ENV DATABASE_URL =', process.env.DATABASE_URL);
+
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
@@ -40,13 +43,6 @@ app.use(express.json());
 
 // API ルート
 app.use('/api/posts', postsRouter);
-
-// クライアント静的ファイル配信 (必要ならコメントを外す)
-// const clientBuildPath = path.join(__dirname, 'build');
-// app.use(express.static(clientBuildPath));
-// app.get('*', (_req, res) => {
-//   res.sendFile(path.join(clientBuildPath, 'index.html'));
-// });
 
 // 登録済みルート一覧をログ出力
 console.log('▶ ROUTES:', app._router.stack
