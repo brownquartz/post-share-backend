@@ -1,2 +1,0 @@
-DATABASE_PUBLIC_URL=postgresql://postgres:pWKXDsIrOxPbgnnpPbkxbwXQtJoKoWxx@crossover.proxy.rlwy.net:45009/railway
-DATABASE_URL=postgresql://postgres:pWKXDsIrOxPbgnnpPbkxbwXQtJoKoWxx@postgres.railway.internal:5432/railway
