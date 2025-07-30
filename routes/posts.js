@@ -95,12 +95,18 @@ router.post('/', async (req, res) => {
          title,
          content,
          accountid AS "accountId",
-         password,
          created_at AS "createdAt",
          expires_at AS "expiresAt"`,
       [title, content, accountId, encryptedPassword]
     );
     const post = rows[0];
+    // ユーザーの expired_at を「今から＋6日」に更新
+    await pool.query(
+      `UPDATE users
+       SET expired_at = NOW() + INTERVAL '6 days'
+       WHERE id = $1`,
+      [accountId]
+    );
     post.password = post.password ? decrypt(post.password) : '';
     res.status(201).json(post);
   } catch (err) {

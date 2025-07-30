@@ -8,6 +8,7 @@ const path = require('path');
 const cors = require('cors');
 
 const pool = require('./db.js');         // PostgreSQL プールを初期化
+const authRouter  = require('./routes/auth.js');
 const postsRouter = require('./routes/posts.js');
 
 const app = express();
@@ -26,6 +27,9 @@ app.use((req, res, next) => {
 app.use(cors());
 app.options('*', cors());
 
+// JSON ボディパーサー
+app.use(express.json());
+
 // テスト用エンドポイント
 app.get('/test', (_req, res) => {
   console.log('● /test called');
@@ -38,8 +42,9 @@ app.get('/__health', (_req, res) => {
   res.json({ status: 'ok' });
 });
 
-// JSON ボディパーサー
-app.use(express.json());
+app.use('/auth', authRouter);
+
+
 
 // API ルート
 app.use('/api/posts', postsRouter);
